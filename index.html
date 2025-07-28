@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Fusion 360 Clone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #0f3460, #0a1a2a);
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            margin: 0 0 15px 0;
+            color: #64b5f6;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: rgba(100, 181, 246, 0.1);
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .btn:hover {
+            background: rgba(100, 181, 246, 0.2);
+            border-color: rgba(100, 181, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn.active {
+            background: rgba(100, 181, 246, 0.3);
+            border-color: #64b5f6;
+            box-shadow: 0 0 15px rgba(100, 181, 246, 0.3);
+        }
+
+        .btn.create-new {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.5);
+            font-weight: bold;
+        }
+
+        .btn.create-new:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4caf50;
+        }
+
+        .object-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .object-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .object-item.selected {
+            background: rgba(100, 181, 246, 0.2);
+            border-color: #64b5f6;
+        }
+
+        .object-name {
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .object-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .object-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+
+        .delete-btn {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+
+        .extrude-btn {
+            background: rgba(33, 150, 243, 0.3);
+            color: #2196f3;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #b0bec5;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #64b5f6;
+            box-shadow: 0 0 10px rgba(100, 181, 246, 0.3);
+        }
+
+        canvas {
+            cursor: crosshair;
+            border-radius: 8px;
+            margin: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 12px;
+            color: #b0bec5;
+        }
+
+        .mode-indicator {
+            margin-right: 20px;
+            padding: 4px 12px;
+            background: rgba(100, 181, 246, 0.2);
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .construction-line {
+            stroke: #ffa726;
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+            opacity: 0.7;
+        }
+
+        .construction-point {
+            fill: #ffa726;
+            stroke: #ff8f00;
+            stroke-width: 1;
+            opacity: 0.8;
+        }
+
+        .dimension-input {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #64b5f6;
+            border-radius: 4px;
+            padding: 8px;
+            color: white;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .dimension-input input {
+            width: 80px;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            color: white;
+            font-size: 11px;
+            margin: 0 5px;
+        }
+
+        .snap-highlight {
+            stroke: #4caf50 !important;
+            stroke-width: 4 !important;
+            filter: drop-shadow(0 0 10px #4caf50);
+        }
+
+        .preview-line {
+            stroke: #64b5f6;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            opacity: 0.8;
+        }
+
+        .no-objects {
+            text-align: center;
+            color: #757575;
+            font-size: 12px;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="section">
+                <h3>Objects</h3>
+                <button class="btn create-new" onclick="createNewObject()">➕ Create New Object</button>
+                <div id="objectsList">
+                    <div class="no-objects">No objects created yet</div>
+                </div>
+            </div>
+
+            <div class="section" id="toolsSection" style="display: none;">
+                <h3>Tools</h3>
+                <button class="btn active" onclick="setTool('line')">📏 Line Tool</button>
+                <button class="btn" onclick="finishSketch()">✅ Finish Sketch</button>
+                
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>Line Length (mm):</label>
+                    <input type="number" id="lineLength" placeholder="Auto" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Line Angle (degrees):</label>
+                    <input type="number" id="lineAngle" placeholder="Auto" min="0" max="360" step="1">
+                </div>
+                <button class="btn" onclick="clearLineDimensions()">🔄 Clear Constraints</button>
+            </div>
+
+            <div class="section">
+                <h3>Settings</h3>
+                <div class="input-group">
+                    <label>Snap Distance:</label>
+                    <input type="number" id="snapDistance" value="25" min="10" max="100">
+                </div>
+                <div class="input-group">
+                    <label>Construction Distance:</label>
+                    <input type="number" id="constructionDistance" value="80" min="30" max="200">
+                </div>
+                <div class="input-group">
+                    <label>Default Extrude Height:</label>
+                    <input type="number" id="extrudeHeight" value="50" min="1" max="200">
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>View</h3>
+                <button class="btn" onclick="resetView()">🏠 Reset View</button>
+                <button class="btn" onclick="toggle3DView()" id="viewToggleBtn">🔄 View 3D</button>
+            </div>
+
+            <div class="section">
+                <h3>Information</h3>
+                <div id="info" style="font-size: 11px; color: #90a4ae; line-height: 1.4;">
+                    Create a new object to start drawing.<br>
+                    Construction lines will show centers and edges of nearby geometry.
+                </div>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <canvas id="canvas2d"></canvas>
+            <canvas id="canvas3d" style="display: none;"></canvas>
+            <div class="status-bar">
+                <div class="mode-indicator" id="modeIndicator">Object Mode</div>
+                <div id="coordinates">x: 0, y: 0</div>
+                <div id="snapInfo" style="margin-left: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Global variables
+        let canvas2d, ctx2d, canvas3d;
+        let currentTool = 'line';
+        let objects = [];
+        let currentObject = null;
+        let isDrawing = false;
+        let startPoint = null;
+        let is3DMode = false;
+        let scene, camera, renderer;
+        let cameraControls = { rotation: { x: 0.2, y: 0 }, zoom: 1 };
+        let objectCounter = 1;
+        let constructionLines = [];
+        let snapPoints = [];
+        let currentSnapPoint = null;
+        let pixelsPerMM = 2; // 2 pixels = 1mm for scale
+        let constrainedLength = null;
+        let constrainedAngle = null;
+
+        // Initialize the application
+        function init() {
+            canvas2d = document.getElementById('canvas2d');
+            canvas3d = document.getElementById('canvas3d');
+            ctx2d = canvas2d.getContext('2d');
+            
+            resizeCanvas();
+            setupEventListeners();
+            init3D();
+            updateObjectsList();
+            
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            const viewport = document.querySelector('.viewport');
+            const rect = viewport.getBoundingClientRect();
+            
+            canvas2d.width = rect.width - 20;
+            canvas2d.height = rect.height - 60;
+            canvas3d.width = rect.width - 20;
+            canvas3d.height = rect.height - 60;
+            
+            if (renderer) {
+                renderer.setSize(canvas3d.width, canvas3d.height);
+                camera.aspect = canvas3d.width / canvas3d.height;
+                camera.updateProjectionMatrix();
+            }
+            
+            draw2D();
+        }
+
+        function setupEventListeners() {
+            canvas2d.addEventListener('mousedown', onMouseDown);
+            canvas2d.addEventListener('mousemove', onMouseMove);
+            canvas2d.addEventListener('mouseup', onMouseUp);
+            canvas2d.addEventListener('mousemove', updateCoordinates);
+            
+            canvas3d.addEventListener('mousedown', on3DMouseDown);
+            canvas3d.addEventListener('mousemove', on3DMouseMove);
+            canvas3d.addEventListener('mouseup', on3DMouseUp);
+            canvas3d.addEventListener('wheel', on3DWheel);
+        }
+
+        // Object Management
+        function createNewObject() {
+            const newObject = {
+                id: objectCounter++,
+                name: `Object ${objectCounter - 1}`,
+                lines: [],
+                is3D: false,
+                mesh: null,
+                color: getRandomColor()
+            };
+            
+            objects.push(newObject);
+            currentObject = newObject;
+            updateObjectsList();
+            enterSketchMode();
+        }
+
+        function selectObject(objectId) {
+            currentObject = objects.find(obj => obj.id === objectId);
+            updateObjectsList();
+            
+            if (currentObject && !currentObject.is3D) {
+                enterSketchMode();
+            } else {
+                exitSketchMode();
+            }
+        }
+
+        function deleteObject(objectId) {
+            const objectIndex = objects.findIndex(obj => obj.id === objectId);
+            if (objectIndex !== -1) {
+                const obj = objects[objectIndex];
+                if (obj.mesh && scene) {
+                    scene.remove(obj.mesh);
+                }
+                objects.splice(objectIndex, 1);
+                
+                if (currentObject && currentObject.id === objectId) {
+                    currentObject = null;
+                    exitSketchMode();
+                }
+                
+                updateObjectsList();
+                draw2D();
+                if (is3DMode) draw3D();
+            }
+        }
+
+        function extrudeObject(objectId) {
+            const obj = objects.find(o => o.id === objectId);
+            if (!obj || obj.lines.length === 0) return;
+            
+            // Remove existing mesh
+            if (obj.mesh && scene) {
+                scene.remove(obj.mesh);
+            }
+            
+            // Create 3D mesh
+            const shape = createShapeFromLines(obj.lines);
+            const extrudeHeight = parseInt(document.getElementById('extrudeHeight').value) * 0.1;
+            
+            const extrudeSettings = {
+                depth: extrudeHeight,
+                bevelEnabled: true,
+                bevelSegments: 4,
+                steps: 1,
+                bevelSize: 0.5,
+                bevelThickness: 0.5
+            };
+            
+            const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: obj.color,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            
+            obj.mesh = new THREE.Mesh(geometry, material);
+            obj.mesh.castShadow = true;
+            obj.mesh.receiveShadow = true;
+            obj.is3D = true;
+            
+            scene.add(obj.mesh);
+            updateObjectsList();
+            
+            if (!is3DMode) {
+                toggle3DView();
+            }
+        }
+
+        function createShapeFromLines(lines) {
+            const shape = new THREE.Shape();
+            
+            if (lines.length > 0) {
+                const firstLine = lines[0];
+                const startX = (firstLine.start.x - canvas2d.width / 2) * 0.1;
+                const startY = -(firstLine.start.y - canvas2d.height / 2) * 0.1;
+                
+                shape.moveTo(startX, startY);
+                
+                lines.forEach(line => {
+                    const x = (line.end.x - canvas2d.width / 2) * 0.1;
+                    const y = -(line.end.y - canvas2d.height / 2) * 0.1;
+                    shape.lineTo(x, y);
+                });
+            }
+            
+            return shape;
+        }
+
+        function updateObjectsList() {
+            const list = document.getElementById('objectsList');
+            
+            if (objects.length === 0) {
+                list.innerHTML = '<div class="no-objects">No objects created yet</div>';
+                return;
+            }
+            
+            list.innerHTML = objects.map(obj => `
+                <div class="object-item ${currentObject && currentObject.id === obj.id ? 'selected' : ''}" 
+                     onclick="selectObject(${obj.id})">
+                    <div class="object-name">
+                        <div style="color: ${obj.color}">●</div>
+                        ${obj.name} ${obj.is3D ? '(3D)' : '(2D)'}
+                        <div style="font-size: 10px; color: #757575;">${obj.lines.length} lines</div>
+                    </div>
+                    <div class="object-controls">
+                        ${!obj.is3D ? `<button class="object-btn extrude-btn" onclick="event.stopPropagation(); extrudeObject(${obj.id})" title="Extrude">🚀</button>` : ''}
+                        <button class="object-btn delete-btn" onclick="event.stopPropagation(); deleteObject(${obj.id})" title="Delete">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getRandomColor() {
+            const colors = ['#64b5f6', '#81c784', '#ffb74d', '#f06292', '#9575cd', '#4db6ac'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Sketch Mode
+        function enterSketchMode() {
+            document.getElementById('toolsSection').style.display = 'block';
+            document.getElementById('modeIndicator').textContent = `Sketch Mode - ${currentObject.name}`;
+            document.getElementById('info').innerHTML = 
+                'Drawing in sketch mode.<br>Construction lines show nearby geometry centers and edges.';
+            
+            if (is3DMode) {
+                toggle3DView();
+            }
+            
+            draw2D();
+        }
+
+        function exitSketchMode() {
+            document.getElementById('toolsSection').style.display = 'none';
+            document.getElementById('modeIndicator').textContent = 'Object Mode';
+            document.getElementById('info').innerHTML = 
+                'Create a new object to start drawing.<br>Construction lines will show centers and edges of nearby geometry.';
+            
+            isDrawing = false;
+            startPoint = null;
+            constructionLines = [];
+            snapPoints = [];
+            currentSnapPoint = null;
+            draw2D();
+        }
+
+        function finishSketch() {
+            exitSketchMode();
+            currentObject = null;
+            updateObjectsList();
+        }
+
+        // 2D Drawing with Construction Lines
+        function onMouseDown(e) {
+            if (!currentObject || currentTool !== 'line') return;
+            
+            const rect = canvas2d.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            // Snap to construction points with higher priority
+            if (currentSnapPoint) {
+                x = currentSnapPoint.x;
+                y = currentSnapPoint.y;
+            }
+            
+            if (!isDrawing) {
+                startPoint = { x, y };
+                isDrawing = true;
+                
+                // Update constraints from inputs
+                const lengthInput = document.getElementById('lineLength').value;
+                const angleInput = document.getElementById('lineAngle').value;
+                
+                constrainedLength = lengthInput ? parseFloat(lengthInput) * pixelsPerMM : null;
+                constrainedAngle = angleInput ? parseFloat(angleInput) * Math.PI / 180 : null;
+                
+            } else {
+                let endPoint = { x, y };
+                
+                // Apply length and angle constraints
+                if (constrainedLength || constrainedAngle) {
+                    endPoint = applyConstraints(startPoint, endPoint);
+                }
+                
+                currentObject.lines.push({ start: startPoint, end: endPoint });
+                isDrawing = false;
+                startPoint = null;
+                constrainedLength = null;
+                constrainedAngle = null;
+                updateObjectsList();
+                draw2D();
+            }
+        }
+
+        function applyConstraints(start, mouseEnd) {
+            let end = { ...mouseEnd };
+            
+            if (constrainedAngle !== null) {
+                // Use constrained angle
+                const length = constrainedLength || distance(start, mouseEnd);
+                end.x = start.x + Math.cos(constrainedAngle) * length;
+                end.y = start.y + Math.sin(constrainedAngle) * length;
+            } else if (constrainedLength !== null) {
+                // Use constrained length but follow mouse direction
+                const angle = Math.atan2(mouseEnd.y - start.y, mouseEnd.x - start.x);
+                end.x = start.x + Math.cos(angle) * constrainedLength;
+                end.y = start.y + Math.sin(angle) * constrainedLength;
+            }
+            
+            return end;
+        }
+
+        function onMouseMove(e) {
+            const rect = canvas2d.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Update construction lines and snap points
+            updateConstructionGeometry(mouseX, mouseY);
+            
+            draw2D();
+            
+            if (isDrawing && currentTool === 'line') {
+                let x = mouseX;
+                let y = mouseY;
+                
+                // Apply constraints first
+                if (constrainedLength || constrainedAngle) {
+                    const constrainedEnd = applyConstraints(startPoint, { x: mouseX, y: mouseY });
+                    x = constrainedEnd.x;
+                    y = constrainedEnd.y;
+                }
+                
+                // Then apply snapping with higher priority
+                if (currentSnapPoint) {
+                    x = currentSnapPoint.x;
+                    y = currentSnapPoint.y;
+                }
+                
+                // Draw preview line
+                ctx2d.strokeStyle = '#64b5f6';
+                ctx2d.lineWidth = 2;
+                ctx2d.setLineDash([5, 5]);
+                ctx2d.beginPath();
+                ctx2d.moveTo(startPoint.x, startPoint.y);
+                ctx2d.lineTo(x, y);
+                ctx2d.stroke();
+                ctx2d.setLineDash([]);
+                
+                // Draw dimension info
+                drawDimensionInfo(startPoint, { x, y });
+            }
+        }
+
+        function drawDimensionInfo(start, end) {
+            const length = distance(start, end) / pixelsPerMM;
+            const angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+            const midX = (start.x + end.x) / 2;
+            const midY = (start.y + end.y) / 2;
+            
+            ctx2d.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx2d.fillRect(midX - 40, midY - 25, 80, 20);
+            
+            ctx2d.fillStyle = '#64b5f6';
+            ctx2d.font = '11px Arial';
+            ctx2d.textAlign = 'center';
+            ctx2d.fillText(`${length.toFixed(1)}mm`, midX, midY - 12);
+            ctx2d.fillText(`${angle.toFixed(1)}°`, midX, midY - 2);
+        }
+
+        function onMouseUp(e) {
+            // Handled in onMouseDown
+        }
+
+        function updateConstructionGeometry(mouseX, mouseY) {
+            if (!currentObject) return;
+            
+            constructionLines = [];
+            snapPoints = [];
+            currentSnapPoint = null;
+            
+            const snapDistance = parseInt(document.getElementById('snapDistance').value);
+            const constructionDistance = parseInt(document.getElementById('constructionDistance').value);
+            let closestSnap = null;
+            let closestDistance = Infinity;
+            
+            // Check all objects for nearby geometry
+            objects.forEach(obj => {
+                if (obj.is3D) return; // Skip 3D objects
+                
+                obj.lines.forEach(line => {
+                    // Calculate distances to all important points on the line
+                    const center = getLineCenter(line);
+                    const centerDist = distance({ x: mouseX, y: mouseY }, center);
+                    const startDist = distance({ x: mouseX, y: mouseY }, line.start);
+                    const endDist = distance({ x: mouseX, y: mouseY }, line.end);
+                    
+                    // Also check distance to the line itself (perpendicular distance)
+                    const perpDist = distancePointToLine(mouseX, mouseY, line);
+                    
+                    // Show construction lines if within construction distance OR if perpendicular distance is small
+                    const showConstruction = (
+                        centerDist < constructionDistance || 
+                        startDist < constructionDistance || 
+                        endDist < constructionDistance ||
+                        perpDist < constructionDistance * 0.3 // Show construction for nearby parallel/perpendicular alignments
+                    );
+                    
+                    if (showConstruction) {
+                        // Construction line to center
+                        if (centerDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: center,
+                                type: 'center',
+                                distance: centerDist
+                            });
+                        }
+                        
+                        // Construction lines to endpoints
+                        if (startDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: line.start,
+                                type: 'endpoint',
+                                distance: startDist
+                            });
+                        }
+                        
+                        if (endDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: line.end,
+                                type: 'endpoint',
+                                distance: endDist
+                            });
+                        }
+                        
+                        // Add construction line to closest point on line edge (for edge snapping)
+                        const closestPointOnLine = getClosestPointOnLine({ x: mouseX, y: mouseY }, line);
+                        const edgeDist = distance({ x: mouseX, y: mouseY }, closestPointOnLine);
+                        
+                        if (edgeDist < constructionDistance * 0.5) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: closestPointOnLine,
+                                type: 'edge',
+                                distance: edgeDist
+                            });
+                        }
+                        
+                        // Check for snapping with improved priority (closer points win)
+                        if (centerDist < snapDistance && centerDist < closestDistance) {
+                            closestSnap = { ...center, type: 'center' };
+                            closestDistance = centerDist;
+                        }
+                        if (startDist < snapDistance && startDist < closestDistance) {
+                            closestSnap = { ...line.start, type: 'endpoint' };
+                            closestDistance = startDist;
+                        }
+                        if (endDist < snapDistance && endDist < closestDistance) {
+                            closestSnap = { ...line.end, type: 'endpoint' };
+                            closestDistance = endDist;
+                        }
+                        if (edgeDist < snapDistance && edgeDist < closestDistance) {
+                            closestSnap = { ...closestPointOnLine, type: 'edge' };
+                            closestDistance = edgeDist;
+                        }
+                    }
+                });
+            });
+            
+            // Also check current object's existing lines with same logic
+            if (currentObject) {
+                currentObject.lines.forEach(line => {
+                    const center = getLineCenter(line);
+                    const centerDist = distance({ x: mouseX, y: mouseY }, center);
+                    const startDist = distance({ x: mouseX, y: mouseY }, line.start);
+                    const endDist = distance({ x: mouseX, y: mouseY }, line.end);
+                    const perpDist = distancePointToLine(mouseX, mouseY, line);
+                    
+                    const showConstruction = (
+                        centerDist < constructionDistance || 
+                        startDist < constructionDistance || 
+                        endDist < constructionDistance ||
+                        perpDist < constructionDistance * 0.3
+                    );
+                    
+                    if (showConstruction) {
+                        // Add construction lines for current object
+                        if (centerDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: center,
+                                type: 'center',
+                                distance: centerDist
+                            });
+                        }
+                        if (startDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: line.start,
+                                type: 'endpoint',
+                                distance: startDist
+                            });
+                        }
+                        if (endDist < constructionDistance) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: line.end,
+                                type: 'endpoint',
+                                distance: endDist
+                            });
+                        }
+                        
+                        // Edge snapping for current object
+                        const closestPointOnLine = getClosestPointOnLine({ x: mouseX, y: mouseY }, line);
+                        const edgeDist = distance({ x: mouseX, y: mouseY }, closestPointOnLine);
+                        
+                        if (edgeDist < constructionDistance * 0.5) {
+                            constructionLines.push({
+                                start: { x: mouseX, y: mouseY },
+                                end: closestPointOnLine,
+                                type: 'edge',
+                                distance: edgeDist
+                            });
+                        }
+                        
+                        // Check for snapping
+                        if (centerDist < snapDistance && centerDist < closestDistance) {
+                            closestSnap = { ...center, type: 'center' };
+                            closestDistance = centerDist;
+                        }
+                        if (startDist < snapDistance && startDist < closestDistance) {
+                            closestSnap = { ...line.start, type: 'endpoint' };
+                            closestDistance = startDist;
+                        }
+                        if (endDist < snapDistance && endDist < closestDistance) {
+                            closestSnap = { ...line.end, type: 'endpoint' };
+                            closestDistance = endDist;
+                        }
+                        if (edgeDist < snapDistance && edgeDist < closestDistance) {
+                            closestSnap = { ...closestPointOnLine, type: 'edge' };
+                            closestDistance = edgeDist;
+                        }
+                    }
+                });
+            }
+            
+            currentSnapPoint = closestSnap;
+            
+            // Update snap info
+            const snapInfo = document.getElementById('snapInfo');
+            if (currentSnapPoint) {
+                snapInfo.textContent = `Snap ${currentSnapPoint.type}: ${Math.round(currentSnapPoint.x)}, ${Math.round(currentSnapPoint.y)}`;
+            } else {
+                snapInfo.textContent = '';
+            }
+        }
+
+        function getClosestPointOnLine(point, line) {
+            const A = point.x - line.start.x;
+            const B = point.y - line.start.y;
+            const C = line.end.x - line.start.x;
+            const D = line.end.y - line.start.y;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) {
+                param = dot / lenSq;
+            }
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = line.start.x;
+                yy = line.start.y;
+            } else if (param > 1) {
+                xx = line.end.x;
+                yy = line.end.y;
+            } else {
+                xx = line.start.x + param * C;
+                yy = line.start.y + param * D;
+            }
+            
+            return { x: xx, y: yy };
+        }
+
+        function distancePointToLine(px, py, line) {
+            const A = px - line.start.x;
+            const B = py - line.start.y;
+            const C = line.end.x - line.start.x;
+            const D = line.end.y - line.start.y;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) {
+                param = dot / lenSq;
+            }
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = line.start.x;
+                yy = line.start.y;
+            } else if (param > 1) {
+                xx = line.end.x;
+                yy = line.end.y;
+            } else {
+                xx = line.start.x + param * C;
+                yy = line.start.y + param * D;
+            }
+            
+            const dx = px - xx;
+            const dy = py - yy;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function getLineCenter(line) {
+            return {
+                x: (line.start.x + line.end.x) / 2,
+                y: (line.start.y + line.end.y) / 2
+            };
+        }
+
+        function distance(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        function updateCoordinates(e) {
+            const rect = canvas2d.getBoundingClientRect();
+            const x = Math.round(e.clientX - rect.left);
+            const y = Math.round(e.clientY - rect.top);
+            document.getElementById('coordinates').textContent = `x: ${x}, y: ${y}`;
+        }
+
+        // 2D Drawing
+        function draw2D() {
+            ctx2d.clearRect(0, 0, canvas2d.width, canvas2d.height);
+            
+            // Draw grid
+            drawGrid();
+            
+            // Draw construction lines with varying opacity based on distance
+            ctx2d.strokeStyle = '#ffa726';
+            ctx2d.lineWidth = 1;
+            ctx2d.setLineDash([3, 3]);
+            constructionLines.forEach(cLine => {
+                // Vary opacity based on distance - closer lines are more visible
+                const maxDist = parseInt(document.getElementById('constructionDistance').value);
+                const opacity = Math.max(0.3, 1 - (cLine.distance / maxDist));
+                ctx2d.globalAlpha = opacity;
+                
+                // Different colors for different types
+                if (cLine.type === 'center') {
+                    ctx2d.strokeStyle = '#ffa726'; // Orange for centers
+                } else if (cLine.type === 'endpoint') {
+                    ctx2d.strokeStyle = '#42a5f5'; // Blue for endpoints
+                } else if (cLine.type === 'edge') {
+                    ctx2d.strokeStyle = '#ab47bc'; // Purple for edges
+                }
+                
+                ctx2d.beginPath();
+                ctx2d.moveTo(cLine.start.x, cLine.start.y);
+                ctx2d.lineTo(cLine.end.x, cLine.end.y);
+                ctx2d.stroke();
+            });
+            ctx2d.setLineDash([]);
+            ctx2d.globalAlpha = 1;
+            
+            // Draw all objects
+            objects.forEach(obj => {
+                if (obj.is3D) return;
+                
+                ctx2d.strokeStyle = obj.color;
+                ctx2d.lineWidth = obj === currentObject ? 3 : 2;
+                
+                obj.lines.forEach(line => {
+                    ctx2d.beginPath();
+                    ctx2d.moveTo(line.start.x, line.start.y);
+                    ctx2d.lineTo(line.end.x, line.end.y);
+                    ctx2d.stroke();
+                    
+                    // Draw endpoints
+                    ctx2d.fillStyle = obj.color;
+                    ctx2d.beginPath();
+                    ctx2d.arc(line.start.x, line.start.y, 3, 0, Math.PI * 2);
+                    ctx2d.fill();
+                    ctx2d.beginPath();
+                    ctx2d.arc(line.end.x, line.end.y, 3, 0, Math.PI * 2);
+                    ctx2d.fill();
+                });
+            });
+            
+            // Draw snap indicator with enhanced visibility
+            if (currentSnapPoint) {
+                ctx2d.fillStyle = '#4caf50';
+                ctx2d.strokeStyle = '#2e7d32';
+                ctx2d.lineWidth = 3;
+                ctx2d.shadowColor = '#4caf50';
+                ctx2d.shadowBlur = 10;
+                
+                ctx2d.beginPath();
+                ctx2d.arc(currentSnapPoint.x, currentSnapPoint.y, 10, 0, Math.PI * 2);
+                ctx2d.fill();
+                ctx2d.stroke();
+                
+                ctx2d.shadowBlur = 0; // Reset shadow
+                
+                // Draw crosshair
+                ctx2d.strokeStyle = '#ffffff';
+                ctx2d.lineWidth = 2;
+                ctx2d.beginPath();
+                ctx2d.moveTo(currentSnapPoint.x - 8, currentSnapPoint.y);
+                ctx2d.lineTo(currentSnapPoint.x + 8, currentSnapPoint.y);
+                ctx2d.moveTo(currentSnapPoint.x, currentSnapPoint.y - 8);
+                ctx2d.lineTo(currentSnapPoint.x, currentSnapPoint.y + 8);
+                ctx2d.stroke();
+                
+                // Draw snap type indicator with more detail
+                ctx2d.fillStyle = '#ffffff';
+                ctx2d.font = '10px Arial';
+                ctx2d.textAlign = 'center';
+                let snapLabel = 'E';
+                if (currentSnapPoint.type === 'center') snapLabel = 'C';
+                else if (currentSnapPoint.type === 'edge') snapLabel = 'M';
+                else if (currentSnapPoint.type === 'endpoint') snapLabel = 'E';
+                
+                ctx2d.fillText(snapLabel, currentSnapPoint.x, currentSnapPoint.y - 15);
+            }
+        }
+
+        function drawGrid() {
+            const gridSize = 20;
+            ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx2d.lineWidth = 1;
+            
+            for (let x = 0; x < canvas2d.width; x += gridSize) {
+                ctx2d.beginPath();
+                ctx2d.moveTo(x, 0);
+                ctx2d.lineTo(x, canvas2d.height);
+                ctx2d.stroke();
+            }
+            
+            for (let y = 0; y < canvas2d.height; y += gridSize) {
+                ctx2d.beginPath();
+                ctx2d.moveTo(0, y);
+                ctx2d.lineTo(canvas2d.width, y);
+                ctx2d.stroke();
+            }
+        }
+
+        // 3D Functions
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a1a2a);
+            
+            camera = new THREE.PerspectiveCamera(75, canvas3d.width / canvas3d.height, 0.1, 1000);
+            camera.position.set(50, 30, 100);
+            camera.lookAt(0, 0, 0);
+            
+            renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true });
+            renderer.setSize(canvas3d.width, canvas3d.height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 50);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x64b5f6, 0.3, 200);
+            pointLight.position.set(-50, 30, 50);
+            scene.add(pointLight);
+        }
+
+        function toggle3DView() {
+            is3DMode = !is3DMode;
+            
+            if (is3DMode) {
+                canvas2d.style.display = 'none';
+                canvas3d.style.display = 'block';
+                document.getElementById('viewToggleBtn').textContent = '🔄 View 2D';
+                document.getElementById('modeIndicator').textContent = '3D Mode';
+                animate3D();
+            } else {
+                canvas2d.style.display = 'block';
+                canvas3d.style.display = 'none';
+                document.getElementById('viewToggleBtn').textContent = '🔄 View 3D';
+                if (currentObject) {
+                    document.getElementById('modeIndicator').textContent = `Sketch Mode - ${currentObject.name}`;
+                } else {
+                    document.getElementById('modeIndicator').textContent = 'Object Mode';
+                }
+            }
+        }
+
+        function draw3D() {
+            if (renderer) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function animate3D() {
+            if (!is3DMode) return;
+            
+            requestAnimationFrame(animate3D);
+            draw3D();
+        }
+
+        // 3D Controls
+        let isDragging3D = false;
+        let previousMouse = { x: 0, y: 0 };
+
+        function on3DMouseDown(e) {
+            isDragging3D = true;
+            previousMouse.x = e.clientX;
+            previousMouse.y = e.clientY;
+        }
+
+        function on3DMouseMove(e) {
+            if (!isDragging3D) return;
+            
+            const deltaX = e.clientX - previousMouse.x;
+            const deltaY = e.clientY - previousMouse.y;
+            
+            cameraControls.rotation.y += deltaX * 0.01;
+            cameraControls.rotation.x += deltaY * 0.01;
+            
+            // Limit vertical rotation
+            cameraControls.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraControls.rotation.x));
+            
+            updateCameraPosition();
+            
+            previousMouse.x = e.clientX;
+            previousMouse.y = e.clientY;
+        }
+
+        function on3DMouseUp(e) {
+            isDragging3D = false;
+        }
+
+        function on3DWheel(e) {
+            e.preventDefault();
+            cameraControls.zoom += e.deltaY * 0.001;
+            cameraControls.zoom = Math.max(0.3, Math.min(5, cameraControls.zoom));
+            updateCameraPosition();
+        }
+
+        function updateCameraPosition() {
+            const distance = 100 * cameraControls.zoom;
+            camera.position.x = Math.sin(cameraControls.rotation.y) * Math.cos(cameraControls.rotation.x) * distance;
+            camera.position.y = Math.sin(cameraControls.rotation.x) * distance;
+            camera.position.z = Math.cos(cameraControls.rotation.y) * Math.cos(cameraControls.rotation.x) * distance;
+            camera.lookAt(0, 0, 0);
+        }
+
+        function clearLineDimensions() {
+            document.getElementById('lineLength').value = '';
+            document.getElementById('lineAngle').value = '';
+            constrainedLength = null;
+            constrainedAngle = null;
+        }
+
+        // Tool Functions
+        function setTool(tool) {
+            currentTool = tool;
+            
+            // Update UI
+            document.querySelectorAll('#toolsSection .btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update info panel
+            const info = document.getElementById('info');
+            if (tool === 'line') {
+                info.innerHTML = 'Drawing lines with extended snap range.<br>Orange=Centers, Blue=Endpoints, Purple=Edges. C=Center, E=Endpoint, M=Midpoint snaps.';
+            }
+        }
+
+        function resetView() {
+            if (is3DMode) {
+                cameraControls = { rotation: { x: 0.2, y: 0 }, zoom: 1 };
+                updateCameraPosition();
+            } else {
+                // Reset 2D view - could add pan/zoom here
+                draw2D();
+            }
+        }
+
+        // Initialize the application when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
